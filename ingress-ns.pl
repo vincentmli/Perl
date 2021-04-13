@@ -3,6 +3,24 @@
 use strict;
 use warnings;
 
+print "creating  namespace...\n";
+for (my $ns=1; $ns < 15; $ns++) {
+   my $namespace = "./ns.yaml";
+   my $namespace_fh;
+   open($namespace_fh, '+>>', $namespace) or die "couldn't open: $!";
+   print $namespace_fh <<EOF
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns$ns
+---
+
+EOF
+
+}
+
+
 print "creating pod in namespace...\n";
 
 for (my $ns=1; $ns < 15; $ns++) {
