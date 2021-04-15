@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 use strict;
 use warnings;
 
@@ -145,3 +144,44 @@ EOF
 
 system("kubectl apply -f $ingress");
 
+=begin
+
+to test:
+
+scale the nginx pod replicas to monitor how soon  nginx pod get populated in BIG-IP 
+
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl get rc -n ns9
+NAME    DESIRED   CURRENT   READY   AGE
+nginx   2         2         2       3h21m
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl scale rc nginx --replicas=3 -n ns9
+replicationcontroller/nginx scaled
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl get po -o wide -n ns9
+NAME          READY   STATUS    RESTARTS   AGE     IP            NODE                NOMINATED NODE   READINESS GATES
+nginx-jxwq6   1/1     Running   0          3h22m   10.42.0.123   k8s-cilium-master   <none>           <none>
+nginx-kzj7r   1/1     Running   0          3h22m   10.42.0.124   k8s-cilium-master   <none>           <none>
+nginx-s9kpv   1/1     Running   0          19s     10.42.0.137   k8s-cilium-master   <none>           <none>
+
+
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl scale rc nginx --replicas=0 -n ns9
+replicationcontroller/nginx scaled
+
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl get po -o wide -n ns9
+NAME          READY   STATUS        RESTARTS   AGE     IP            NODE                NOMINATED NODE   READINESS GATES
+nginx-jxwq6   0/1     Terminating   0          3h25m   10.42.0.123   k8s-cilium-master   <none>           <none>
+nginx-kzj7r   0/1     Terminating   0          3h25m   10.42.0.124   k8s-cilium-master   <none>           <none>
+nginx-s9kpv   0/1     Terminating   0          3m3s    10.42.0.137   k8s-cilium-master   <none>           <none>
+
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl scale rc nginx --replicas=4 -n ns9
+replicationcontroller/nginx scaled
+
+
+root@k8s-cilium-master:/home/vincent/k3s-examples/C3431966/perl# kubectl get po -o wide -n ns9
+NAME          READY   STATUS              RESTARTS   AGE   IP       NODE                NOMINATED NODE   READINESS GATES
+nginx-q7n6p   0/1     ContainerCreating   0          3s    <none>   k8s-cilium-master   <none>           <none>
+nginx-fczdw   0/1     ContainerCreating   0          3s    <none>   k8s-cilium-master   <none>           <none>
+nginx-q486f   0/1     ContainerCreating   0          3s    <none>   k8s-cilium-master   <none>           <none>
+nginx-hm7x5   0/1     ContainerCreating   0          3s    <none>   k8s-cilium-master   <none>           <none>
+
+=end
+
+=cut
