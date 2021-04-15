@@ -3,9 +3,10 @@
 use strict;
 use warnings;
 
+my $namespace = "./ns.yaml";
+
 print "creating  namespace...\n";
 for (my $ns=1; $ns < 15; $ns++) {
-   my $namespace = "./ns.yaml";
    my $namespace_fh;
    open($namespace_fh, '+>>', $namespace) or die "couldn't open: $!";
    print $namespace_fh <<EOF
@@ -20,11 +21,15 @@ EOF
 
 }
 
+system("kubectl apply -f $namespace");
+
+
 
 print "creating pod in namespace...\n";
 
+my $pod = "./pod-ns.yaml";
+
 for (my $ns=1; $ns < 15; $ns++) {
-   my $pod = "./pod-ns$ns.yaml";
    my $pod_fh;
    open($pod_fh, '+>>', $pod) or die "couldn't open: $!";
    print $pod_fh <<EOF
@@ -51,15 +56,19 @@ spec:
         - containerPort: 80
 
 ---
-
 EOF
+
+
 }
+
+system("kubectl apply -f $pod");
 
 
 print "creating service..\n";
 
+my $service = "./service-ns.yaml";
+
 for (my $ns=1; $ns < 15; $ns++) {
-   my $service = "./service-ns$ns.yaml";
    my $service_fh;
    open($service_fh, '+>>', $service) or die "couldn't open: $!";
 
@@ -88,17 +97,18 @@ EOF
 
    }
 
-
 }
 
+system("kubectl apply -f $service");
 
 	
    print "creating ingress...\n";
 
+my $ingress = "./ingress-ns.yaml";
+
 for (my $ns=1; $ns < 15; $ns++) {
 
    print "ns $ns\n";
-   my $ingress = "./ingress-ns$ns.yaml";
    my $ing_fh;
 
    open($ing_fh, '+>>', $ingress) or die "couldn't open: $!";
@@ -130,8 +140,8 @@ spec:
 EOF
 
    }
+
 }
 
-
-
+system("kubectl apply -f $ingress");
 
