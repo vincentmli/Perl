@@ -4,7 +4,6 @@ use warnings;
 use Getopt::Long qw(GetOptions);
 
 my $num_ns;
-my $num_svc;
 my $num_ing;
 
 GetOptions(
@@ -12,7 +11,6 @@ GetOptions(
     'ingress=i' => \$num_ing,
 ) or die "Usage: $0 \n
  	  --namespace <number of namespace> \n
-          --service <number of service>\n
           --ingress <number of ingress>\n";
 
 die "
