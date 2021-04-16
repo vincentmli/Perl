@@ -1,11 +1,30 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use Getopt::Long qw(GetOptions);
+
+my $num_ns;
+my $num_svc;
+my $num_ing;
+
+GetOptions(
+    'namespace=i' => \$num_ns,
+    'service=i' => \$num_svc,
+    'ingress=i' => \$num_ing,
+) or die "Usage: $0 \n
+ 	  --namespace <number of namespace> \n
+          --service <number of service>\n
+          --ingress <number of ingress>\n";
+
+die "
+--namespace not supplied\n
+--service not supplied\n
+--ingress not supplied\n " if (not $num_ns or not $num_svc or not $num_ing);
 
 my $namespace = "./ns.yaml";
 
 print "creating  namespace...\n";
-for (my $ns=1; $ns < 15; $ns++) {
+for (my $ns=1; $ns < $num_ns; $ns++) {
    my $namespace_fh;
    open($namespace_fh, '+>>', $namespace) or die "couldn't open: $!";
    print $namespace_fh <<EOF
@@ -22,13 +41,11 @@ EOF
 
 system("kubectl apply -f $namespace");
 
-
-
 print "creating pod in namespace...\n";
 
 my $pod = "./pod-ns.yaml";
 
-for (my $ns=1; $ns < 15; $ns++) {
+for (my $ns=1; $ns < $num_ns; $ns++) {
    my $pod_fh;
    open($pod_fh, '+>>', $pod) or die "couldn't open: $!";
    print $pod_fh <<EOF
@@ -57,25 +74,22 @@ spec:
 ---
 EOF
 
-
 }
 
 system("kubectl apply -f $pod");
-
 
 print "creating service..\n";
 
 my $service = "./service-ns.yaml";
 
-for (my $ns=1; $ns < 15; $ns++) {
+for (my $ns=1; $ns < $num_ns; $ns++) {
    my $service_fh;
    open($service_fh, '+>>', $service) or die "couldn't open: $!";
 
-   for (my $i=1; $i < 10; $i++) {
+   for (my $i=1; $i < $num_svc; $i++) {
 	print "svc $i ns $ns\n";
 
-   print $service_fh <<EOF
-
+        print $service_fh <<EOF
 
 apiVersion: v1
 kind: Service
@@ -99,20 +113,19 @@ EOF
 }
 
 system("kubectl apply -f $service");
-
 	
-   print "creating ingress...\n";
+print "creating ingress...\n";
 
 my $ingress = "./ingress-ns.yaml";
 
-for (my $ns=1; $ns < 15; $ns++) {
+for (my $ns=1; $ns < $num_ns; $ns++) {
 
    print "ns $ns\n";
    my $ing_fh;
 
    open($ing_fh, '+>>', $ingress) or die "couldn't open: $!";
 
-   for (my $i=1; $i < 10; $i++) {
+   for (my $i=1; $i < $num_ing; $i++) {
 	print "ing $i svc $i ns $ns\n";
 
         print $ing_fh <<EOF
