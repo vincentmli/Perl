@@ -9,7 +9,6 @@ my $num_ing;
 
 GetOptions(
     'namespace=i' => \$num_ns,
-    'service=i' => \$num_svc,
     'ingress=i' => \$num_ing,
 ) or die "Usage: $0 \n
  	  --namespace <number of namespace> \n
@@ -18,13 +17,12 @@ GetOptions(
 
 die "
 --namespace not supplied\n
---service not supplied\n
---ingress not supplied\n " if (not $num_ns or not $num_svc or not $num_ing);
+--ingress not supplied\n " if (not $num_ns or not $num_ing);
 
 my $namespace = "./ns.yaml";
 
 print "creating  namespace...\n";
-for (my $ns=1; $ns < $num_ns; $ns++) {
+for (my $ns=1; $ns <= $num_ns; $ns++) {
    my $namespace_fh;
    open($namespace_fh, '+>>', $namespace) or die "couldn't open: $!";
    print $namespace_fh <<EOF
@@ -45,7 +43,7 @@ print "creating pod in namespace...\n";
 
 my $pod = "./pod-ns.yaml";
 
-for (my $ns=1; $ns < $num_ns; $ns++) {
+for (my $ns=1; $ns <= $num_ns; $ns++) {
    my $pod_fh;
    open($pod_fh, '+>>', $pod) or die "couldn't open: $!";
    print $pod_fh <<EOF
@@ -82,11 +80,11 @@ print "creating service..\n";
 
 my $service = "./service-ns.yaml";
 
-for (my $ns=1; $ns < $num_ns; $ns++) {
+for (my $ns=1; $ns <= $num_ns; $ns++) {
    my $service_fh;
    open($service_fh, '+>>', $service) or die "couldn't open: $!";
 
-   for (my $i=1; $i < $num_svc; $i++) {
+   for (my $i=1; $i <= $num_ing; $i++) {
 	print "svc $i ns $ns\n";
 
         print $service_fh <<EOF
@@ -118,15 +116,17 @@ print "creating ingress...\n";
 
 my $ingress = "./ingress-ns.yaml";
 
-for (my $ns=1; $ns < $num_ns; $ns++) {
+for (my $ns=1; $ns <= $num_ns; $ns++) {
 
    print "ns $ns\n";
    my $ing_fh;
 
    open($ing_fh, '+>>', $ingress) or die "couldn't open: $!";
 
-   for (my $i=1; $i < $num_ing; $i++) {
+   for (my $i=1; $i <= $num_ing; $i++) {
 	print "ing $i svc $i ns $ns\n";
+
+	my $ip = 10 . "." . 169 . "." . int(rand(255)) . "." . int(rand(255));
 
         print $ing_fh <<EOF
 
@@ -138,7 +138,7 @@ metadata:
   annotations:
      ingress.kubernetes.io/allow-http: "true"
      kubernetes.io/ingress.class: f5
-     'virtual-server.f5.com/ip': '10.169.72.$ns$i'
+     'virtual-server.f5.com/ip': "$ip" 
 spec:
   rules:
    - host: www.ing$i-svc$i-ns$ns.com
