@@ -4,26 +4,44 @@ use warnings;
 use Getopt::Long qw(GetOptions);
 
 my $num_ns;
+my $num_pod;
 my $num_ing;
-
-GetOptions(
-    'namespace=i' => \$num_ns,
-    'ingress=i' => \$num_ing,
-) or die "Usage: $0 \n
- 	  --namespace <number of namespace> \n
-          --ingress <number of ingress>\n";
-
-die "
---namespace not supplied\n
---ingress not supplied\n " if (not $num_ns or not $num_ing);
+my $add;
+my $del;
 
 my $namespace = "./ns.yaml";
+my $pod = "./pod-ns.yaml";
+my $service = "./service-ns.yaml";
+my $ingress = "./ingress-ns.yaml";
 
-print "creating  namespace...\n";
-for (my $ns=1; $ns <= $num_ns; $ns++) {
-   my $namespace_fh;
-   open($namespace_fh, '+>>', $namespace) or die "couldn't open: $!";
-   print $namespace_fh <<EOF
+GetOptions(
+    'add|a' => \$add,
+    'del|d' => \$del,
+    'namespace|n=i' => \$num_ns,
+    'pod|p=i' => \$num_pod,
+    'ingress|i=i' => \$num_ing,
+) or die "Usage: $0 \n
+          --add|a add option \n
+          --del|d delete option \n
+          --namespace|n <number of namespace> \n
+          --pod|p <number of pod in namespace> \n
+          --ingress|i <number of ingress in namespace>\n";
+
+if($del) {
+    print "deleting $ingress, $service, $pod, $namespace\n";
+    system("kubectl delete -f $ingress; rm -rf $ingress") if (-e $ingress);
+    system("kubectl delete -f $service; rm -rf $service") if (-e $service);
+    system("kubectl delete -f $pod; rm -rf $pod") if (-e $pod);
+    system("kubectl delete -f $namespace; rm -rf $namespace") if (-e $namespace);
+    exit;
+}
+
+if ($num_ns) {
+	print "creating  namespace yaml file $namespace...\n";
+	for (my $ns=1; $ns <= $num_ns; $ns++) {
+	my $namespace_fh;
+	open($namespace_fh, '+>>', $namespace) or die "couldn't open: $!";
+	print $namespace_fh <<EOF
 
 apiVersion: v1
 kind: Namespace
@@ -33,18 +51,19 @@ metadata:
 
 EOF
 
+	}
+
 }
 
-system("kubectl apply -f $namespace");
+if ($num_pod and $num_ns) {
 
-print "creating pod in namespace...\n";
+	print "creating pod in namespace yaml file $pod...\n";
 
-my $pod = "./pod-ns.yaml";
 
-for (my $ns=1; $ns <= $num_ns; $ns++) {
-   my $pod_fh;
-   open($pod_fh, '+>>', $pod) or die "couldn't open: $!";
-   print $pod_fh <<EOF
+	for (my $ns=1; $ns <= $num_ns; $ns++) {
+   		my $pod_fh;
+   		open($pod_fh, '+>>', $pod) or die "couldn't open: $!";
+   		print $pod_fh <<EOF
 
 apiVersion: v1
 kind: ReplicationController
@@ -52,7 +71,7 @@ metadata:
   name: nginx
   namespace: ns$ns
 spec:
-  replicas: 2 
+  replicas: $num_pod 
   selector:
     app: nginx
   template:
@@ -70,22 +89,23 @@ spec:
 ---
 EOF
 
+	}
+
 }
 
-system("kubectl apply -f $pod");
+if ($num_ns) {
 
-print "creating service..\n";
+	print "creating service yaml file $service...\n";
 
-my $service = "./service-ns.yaml";
 
-for (my $ns=1; $ns <= $num_ns; $ns++) {
-   my $service_fh;
-   open($service_fh, '+>>', $service) or die "couldn't open: $!";
+	for (my $ns=1; $ns <= $num_ns; $ns++) {
+   		my $service_fh;
+   		open($service_fh, '+>>', $service) or die "couldn't open: $!";
 
-   for (my $i=1; $i <= $num_ing; $i++) {
-	print "svc $i ns $ns\n";
+   		for (my $i=1; $i <= $num_ing; $i++) {
+			print "svc $i ns $ns\n";
 
-        print $service_fh <<EOF
+        		print $service_fh <<EOF
 
 apiVersion: v1
 kind: Service
@@ -104,29 +124,27 @@ spec:
 ---
 EOF
 
-   }
-
+   		}
+	}
 }
 
-system("kubectl apply -f $service");
+if ($num_ns) {
 	
-print "creating ingress...\n";
+	print "creating ingress yaml file $ingress...\n";
 
-my $ingress = "./ingress-ns.yaml";
+	for (my $ns=1; $ns <= $num_ns; $ns++) {
 
-for (my $ns=1; $ns <= $num_ns; $ns++) {
+   		print "ns $ns\n";
+   		my $ing_fh;
 
-   print "ns $ns\n";
-   my $ing_fh;
+   		open($ing_fh, '+>>', $ingress) or die "couldn't open: $!";
 
-   open($ing_fh, '+>>', $ingress) or die "couldn't open: $!";
+   		for (my $i=1; $i <= $num_ing; $i++) {
+			print "ing $i svc $i ns $ns\n";
 
-   for (my $i=1; $i <= $num_ing; $i++) {
-	print "ing $i svc $i ns $ns\n";
+			my $ip = 10 . "." . 169 . "." . int(rand(255)) . "." . int(rand(255));
 
-	my $ip = 10 . "." . 169 . "." . int(rand(255)) . "." . int(rand(255));
-
-        print $ing_fh <<EOF
+        		print $ing_fh <<EOF
 
 apiVersion: extensions/v1beta1 
 kind: Ingress
@@ -149,11 +167,17 @@ spec:
 ---
 EOF
 
-   }
-
+   		}
+	}
 }
 
-system("kubectl apply -f $ingress");
+if($add) {
+	print "deploying $namespace, $pod, $service, $ingress in Kubernetes...\n";
+	system("kubectl apply -f $namespace") if (-e $namespace);
+	system("kubectl apply -f $pod") if ( -e $pod);
+	system("kubectl apply -f $service") if ( -e $service);
+	system("kubectl apply -f $ingress") if ( -e $ingress);
+}
 
 =begin
 
