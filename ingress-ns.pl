@@ -180,12 +180,14 @@ if($add) {
 }
 
 =begin
-|
 |                                                          +--------+
 |                                                          |client  |
 |   Light Weight Kuberntes                                 +---+----+
 |                                                              |data 
 |   k3s master single node                                     |path      BIG-IP
+|                                                              |
+|  ./ingress-ns.pl -a -n 15 -i 10 -p 2                         |
+|  ./ingress-ns.pl -d                                          |
 +-------------------------------------+                  +-----+-----------------+
 |                                     |   Control Plain  |                       |
 |   F5 Container Ingress Service pod  +----------------->+  virtuals             |
