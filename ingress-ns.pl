@@ -155,9 +155,18 @@ metadata:
      ingress.kubernetes.io/allow-http: "true"
      kubernetes.io/ingress.class: f5
      'virtual-server.f5.com/ip': "$ip" 
+     virtual-server.f5.com/health: |
+      [
+        {
+          "path":     "www.ing$i-svc$i-ns$ns.com/",
+          "send":     "GET / HTTP/1.1\\r\\nHost: www.ing$i-svc$i-ns$ns.com\\r\\nConnection: Close\\r\\n\\r\\n",
+          "interval": 5,
+          "timeout":  10
+        }
+      ]
 spec:
   rules:
-   - host: www.ing$i-svc$i-ns$ns.com
+   - host: www.ing$i-svc$i-ns$ns.com 
      http:
        paths:
        - path: /
@@ -180,14 +189,17 @@ if($add) {
 }
 
 =begin
+
+|
+|                                         curl -H "Host: www.ing1-svc1-ns1.com" http://VIP/
 |                                                          +--------+
 |                                                          |client  |
 |   Light Weight Kuberntes                                 +---+----+
 |                                                              |data 
-|   k3s master single node                                     |path      BIG-IP
+|   k3s master single node                                     |path      
 |                                                              |
 |  ./ingress-ns.pl -a -n 15 -i 10 -p 2                         |
-|  ./ingress-ns.pl -d                                          |
+|  ./ingress-ns.pl -d                                          | BIG-IP
 +-------------------------------------+                  +-----+-----------------+
 |                                     |   Control Plain  |                       |
 |   F5 Container Ingress Service pod  +----------------->+  virtuals             |
