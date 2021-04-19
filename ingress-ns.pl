@@ -195,18 +195,18 @@ if($add) {
 |                                                          +--------+
 |                                                          |client  |
 |   Light Weight Kuberntes                                 +---+----+
-|                                                              |data 
+|                                                              ^data 
 |   k3s master single node                                     |path      
-|                                                              |
-|  ./ingress-ns.pl -a -n 15 -i 10 -p 2                         |
-|  ./ingress-ns.pl -d                                          | BIG-IP
+|  #kubectl apply -f cis-2.3.0.yaml                            |
+|  #./ingress-ns.pl -a -n 15 -i 10 -p 2                        |
+|  #./ingress-ns.pl -d                                         v BIG-IP
 +-------------------------------------+                  +-----+-----------------+
 |                                     |   Control Plain  |                       |
-|   F5 Container Ingress Service pod  +----------------->+  virtuals             |
-+---------------+---------------------+                  |                       |
-|     ns1       | ns2                 |                  |  pools                |
-+---------------+---------------------+                  |                       |
-|  +----------+ | +----------+        |                  |  policies             |
+|   F5 Container Ingress Service pod  +----------------->+  virtual-1  virtual-2 |
++---------------+---------------------+                  |     |          |      |
+|     ns1       | ns2                 |                  |  policy-1   policy-2  |
++---------------+---------------------+                  |     |          |      |
+|  +----------+ | +----------+        |                  |  pool-1     pool-2    |
 |  |Nginx pods| | |Nginx pods|        +<-------+         |                       |
 +  -----------+ | +----------+        |        |         +----------+------------+
 |  +--------+   | +--------+          |        |                    ^             
